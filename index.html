@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <style>
+      body {
+        margin: 20px;
+      }
+      .form-group {
+        margin: 30px 0;
+      }
+      textarea {
+        height: 300px !important;
+      }
+      button {
+        margin-right: 10px;
+      }
+    </style>
+    <title>Hodorizer</title>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Hodorizer</h1>
+      <p>Turns text into Hodor. And back. Hodor!</p>
+
+      <div class="form-group">
+        <textarea class="form-control" id="text" rows="3" placeholder="Enter something"></textarea>
+      </div>
+
+      <div class="form-group">
+        <button type="button" class="btn btn-primary" id="encode">Hodorize</button>
+        <button type="button" class="btn btn-secondary" id="decode">DeHodorize</button>
+      </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+
+    <script>
+      function atou(b64) {
+        return decodeURIComponent(escape(atob(b64)));
+      }
+      function utoa(data) {
+        return btoa(unescape(encodeURIComponent(data)));
+      }
+      $(function() {
+        const map = [
+          "ｈｏｄｏｒ",
+          "ＨＯＤＯＲ",
+          "𝐡𝐨𝐝𝐨𝐫",
+          "𝐇𝐎𝐃𝐎𝐑",
+          "𝗁𝗈𝖽𝗈𝗋",
+          "hodor",
+          "HODOR",
+          "𝖧𝖮𝖣𝖮𝖱",
+          "𝗛𝗢𝗗𝗢𝗥",
+          "𝘩𝘰𝘥𝘰𝘳",
+          "𝘏𝘖𝘋𝘖𝘙",
+          "𝙝𝙤𝙙𝙤𝙧",
+          "𝙃𝙊𝘿𝙊𝙍",
+          "𝒉𝒐𝒅𝒐𝒓",
+          "𝑯𝑶𝑫𝑶𝑹",
+          "ʜᴏᴅᴏʀ",
+        ];
+        $("#encode").click(function() {
+          const input = $("#text").val();
+          const output = utoa(input).split("").map(s => s.charCodeAt(0)).map(function(code, index) {
+            return [code >> 4, code % 16].map(function(num, half) {
+              const which = (index * 2 + half) % 5;
+              const segment = map[num];
+              return (
+                (segment.length === 5 && segment.substr(which, 1)) ||
+                (segment.length === 10 && segment.substr(which * 2, 2))
+            ) + (which === 4 ? ' ' : '');
+            }).join("");
+          }).join("").trim();
+          $("#text").val(output);
+        });
+        $("#decode").click(function() {
+          const input = $("#text").val().replace(/ /g, "").trim();
+          const lookupChar = function(lookupChar) {
+            return map.findIndex(function(set) {
+              return set.length / lookupChar.length === 5 && set.indexOf(lookupChar) !== -1;
+            });
+          };
+          const arr = [];
+          // Gosh, JavaScript sucks at Unicode...
+          for (let i = 0; i < input.length; i++) {
+            const single = lookupChar(input.substr(i, 1));
+            const double = lookupChar(input.substr(i, 2));
+            const val = double !== -1 ? double : single;
+            if (val === -1) {
+              alert("I don't know how to DeHodorize this text: invalid character in input.");
+              return;
+            }
+            double !== -1 && (i += 1);
+            arr.push(val);
+          }
+          if (arr.length % 2 !== 0) {
+            alert("I don't know how to DeHodorize this text: incomplete input.");
+            return;
+          }
+          const output = [...Array(arr.length / 2).keys()].map(k => k * 2).map(function(index) {
+            return String.fromCharCode(arr[index] * 16 + arr[index + 1]).toString();
+          }).join("");
+          $("#text").val(atou(output));
+        });
+      });
+    </script>
+  </body>
+</html>
